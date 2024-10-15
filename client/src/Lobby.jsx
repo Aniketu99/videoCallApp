@@ -1,28 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState} from 'react';
 import { useSocket } from './SocketProvider';
+import { useNavigate } from 'react-router-dom';
 import './App.css';
 
 function Lobby() {
   const [email, setEmail] = useState('');
   const [roomId, setRoomId] = useState('');
   const socket = useSocket();
+  const navigation = useNavigate();
 
   const joinHandler = () => {
     if (email && roomId) {
       socket.emit("join-room", { email, roomId });
+      navigation(`/room/${roomId}`);
+
     } else {
       alert("Email and Room ID are required!");
     }
   };
-
-  useEffect(() => {
-   
-
-    return () => {
- 
-    };
-    
-  }, [socket]);
 
   return (
     <div className='container'>

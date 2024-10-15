@@ -20,11 +20,11 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  
+    
     socket.on("join-room", ({ email, roomId }) => {
         console.log(`User ${email} joined room ${roomId}`);
         socket.join(roomId);
-        socket.to(roomId).emit("user-joined", { email });
+        socket.to(roomId).emit("user-joined", {email:email});
     });
 
     socket.on("disconnect", () => {
