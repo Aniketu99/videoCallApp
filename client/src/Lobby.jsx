@@ -11,7 +11,7 @@ function Lobby() {
 
   const joinHandler = () => {
     if (email && roomId) {
-      socket.emit("join-room", { email, roomId });
+      socket.emit("joined-room", { email, roomId });
       navigation(`/room/${roomId}`);
 
     } else {

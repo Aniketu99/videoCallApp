@@ -4,10 +4,10 @@ import React from 'react'
 
 const socketcontext = createContext();
 
-export const useSocket = ()=>{
+export const useSocket = () => {
     const socket = useContext(socketcontext);
     return socket;
-}
+};
 
 export const SocketProvider = (props) => {
 

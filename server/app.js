@@ -21,15 +21,22 @@ const io = new Server(server, {
 
 io.on("connection", (socket) => {
     
-    socket.on("join-room", ({ email, roomId }) => {
-        console.log(`User ${email} joined room ${roomId}`);
+    socket.on("joined-room", ({ email, roomId }) => {
+        console.log(`User ${email} joined-room ${roomId}`);
         socket.join(roomId);
-        socket.to(roomId).emit("user-joined", {email:email});
+        socket.to(roomId).emit("user-joined", {email:email,id:socket.id});
+    });
+
+    socket.on("create-offer", (data) => {
+        const { to, offer } = data;
+        console.log(`Offer received from ${from}:`, offer);
+        socket.to(to).emit('send-offer',{from:socket.id,offer:offer})
     });
 
     socket.on("disconnect", () => {
         console.log("User disconnected");
     });
+
 });
 
 server.listen(PORT, () => {
