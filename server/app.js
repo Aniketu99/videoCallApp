@@ -27,11 +27,14 @@ io.on("connection", (socket) => {
         socket.to(roomId).emit("user-joined", {email:email,id:socket.id});
     });
 
-    socket.on("create-offer", (data) => {
+    socket.on("sendOffer", (data) => {
         const { to, offer } = data;
-        console.log(`Offer received from ${from}:`, offer);
-        socket.to(to).emit('send-offer',{from:socket.id,offer:offer})
+        io.to(to).emit("receiveOffer",{from:socket.id,offer:offer});
     });
+
+    socket.on("sendAns",({to,Ans}) => {
+        io.to(to).emit("receiveAns",{from:socket.id,Ans:Ans});
+    })
 
     socket.on("disconnect", () => {
         console.log("User disconnected");

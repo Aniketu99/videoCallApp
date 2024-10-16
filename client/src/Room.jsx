@@ -8,49 +8,73 @@ function Room() {
     const socket = useSocket();
     const { roomId } = useParams();
     const [remoteId, setRemoteId] = useState(null);
-    const [localStream, setLocalStream] = useState(null); 
-      
+    const [localStream, setLocalStream] = useState(null);
+    const [remoteStream, setRemoteStream] = useState(null);
+
     const peerConnection = new RTCPeerConnection({
         iceServers: [
-          {
-            urls: 'stun:stun.1.google.com:19302'
-          },
+            {
+                urls: 'stun:stun.1.google.com:19302'
+            },
         ],
-      });
+    });
 
     const handleCall = useCallback(async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            setLocalStream(stream);
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
-            socket.emit("create-offer",{to:remoteId,offer:offer});  
-        } catch (error) {
-            console.error('Error accessing media devices.', error);
-        }
-    }, []);
+
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        setLocalStream(stream);
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        socket.emit("sendOffer", { to: remoteId, offer });
+
+    }, [socket, remoteId]);
 
     useEffect(() => {
-        
+
+        peerConnection.addEventListener("track", async (e) => {
+            setRemoteStream(e.streams[0])
+        });
+
+    }, [])
+
+    useEffect(() => {
+
         const handleUserJoined = ({ email, id }) => {
             console.log(`${email} joined the room`);
             setRemoteId(id);
         };
 
-        socket.on("send-offer",async ({from,offer})=>{
+        const handelofferReceive = async ({ from, offer }) => {
+
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             setLocalStream(stream);
-            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
+            console.log(from, offer);
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
             const Ans = await peerConnection.createAnswer();
             await peerConnection.setLocalDescription(Ans);
-            socket.emit("create-Ans",{to:from,ans:Ans});  
-        })
+            socket.emit("sendAns", { to: from, Ans: Ans });
+
+        }
+
+        const handelAnsReceive = async ({ from, Ans }) => {
+            console.log("all done ")
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(Ans));
+            localStream.getTracks().forEach(track => {
+                peerConnection.addTrack(track, localStream);
+            });
+        }
 
         socket.on("user-joined", handleUserJoined);
+        socket.on("receiveOffer", handelofferReceive);
+        socket.on("receiveAns", handelAnsReceive);
 
         return () => {
+
             socket.off("user-joined", handleUserJoined);
+            socket.off("receiveOffer", handelofferReceive);
+            socket.off("receiveAns", handelAnsReceive);
         };
+
     }, [socket]);
 
     return (
@@ -66,8 +90,8 @@ function Room() {
                     {localStream && (
                         <ReactPlayer
                             url={localStream}
-                            width="100px"
-                            height="100px"
+                            width="100%"
+                            height="300px"
                             playing
                             controls
                             muted
@@ -75,7 +99,16 @@ function Room() {
                     )}
                 </div>
                 <div className='col-6'>
-
+                    {remoteStream && (
+                        <ReactPlayer
+                            url={remoteStream}
+                            width="100%"
+                            height="300px"
+                            playing
+                            controls
+                            muted
+                        />
+                    )}
                 </div>
             </div>
         </div>
